@@ -10,13 +10,12 @@ class NoSleep {
         this.intervals = [];
         this.eventListeners = [];
         
-        // 複数のフォールバック戦略を準備
+        // 複数のフォールバック戦略を準備（WebRTCを除外）
         this.strategies = [
             this.wakeLockStrategy.bind(this),
             this.videoStrategy.bind(this),
             this.audioStrategy.bind(this),
             this.activityStrategy.bind(this),
-            this.webrtcStrategy.bind(this),
             this.workerStrategy.bind(this)
         ];
     }
@@ -217,29 +216,7 @@ class NoSleep {
     }
     
     // 戦略5: WebRTC戦略
-    async webrtcStrategy() {
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { width: 1, height: 1 }, 
-                audio: false 
-            });
-            
-            const video = document.createElement('video');
-            video.srcObject = stream;
-            video.style.position = 'absolute';
-            video.style.left = '-9999px';
-            video.style.opacity = '0';
-            video.muted = true;
-            video.playsInline = true;
-            
-            document.body.appendChild(video);
-            await video.play();
-            
-            console.log('NoSleep: WebRTC strategy activated');
-        } catch (error) {
-            console.warn('NoSleep: WebRTC strategy failed:', error);
-        }
-    }
+    // WebRTC戦略は削除（カメラアクセス要求を回避）
     
     // 戦略6: Web Worker戦略
     async workerStrategy() {
