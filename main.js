@@ -736,43 +736,15 @@ class BasketTimer {
                 // 少し待ってから再試行
                 setTimeout(() => {
                     this.selectVoice();
-                    this.testDesktopVoice();
                 }, 100);
             } else {
                 this.selectVoice();
-                this.testDesktopVoice();
             }
         } catch (error) {
             console.warn('Desktop voice initialization failed:', error);
         }
     }
     
-    testDesktopVoice() {
-        try {
-            // デスクトップでは音声テストを無音で実行
-            const testUtterance = new SpeechSynthesisUtterance('テスト');
-            testUtterance.volume = 0.01; // 極小音量
-            testUtterance.rate = 10; // 高速再生
-            testUtterance.lang = 'ja-JP';
-            
-            if (this.selectedVoice) {
-                testUtterance.voice = this.selectedVoice;
-                console.log('Desktop voice test with:', this.selectedVoice.name);
-            }
-            
-            testUtterance.onend = () => {
-                console.log('Desktop voice test completed successfully');
-            };
-            
-            testUtterance.onerror = () => {
-                console.warn('Desktop voice test failed');
-            };
-            
-            speechSynthesis.speak(testUtterance);
-        } catch (error) {
-            console.warn('Desktop voice test error:', error);
-        }
-    }
     
     toggleTimer() {
         if (this.isRunning) {
