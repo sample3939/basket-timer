@@ -452,8 +452,11 @@ class BasketTimer {
     
     async initSpeechSynthesis() {
         return new Promise((resolve) => {
-            const testUtterance = new SpeechSynthesisUtterance('テスト');
-            testUtterance.volume = 0.01; // 極小音量
+            // 音声リストを先に取得
+            this.selectVoice();
+            
+            const testUtterance = new SpeechSynthesisUtterance('');
+            testUtterance.volume = 0; // 完全に無音
             testUtterance.rate = 10; // 高速再生
             
             if (this.selectedVoice) {
@@ -467,16 +470,16 @@ class BasketTimer {
             };
             
             testUtterance.onerror = () => {
-                console.warn('Speech synthesis initialization failed');
+                console.log('Speech synthesis initialization completed (with error)');
                 resolve();
             };
             
             // タイムアウト設定
             setTimeout(() => {
                 speechSynthesis.cancel();
-                console.log('Speech synthesis initialization timeout');
+                console.log('Speech synthesis initialization completed (timeout)');
                 resolve();
-            }, 1000);
+            }, 500);
             
             speechSynthesis.speak(testUtterance);
         });
@@ -746,9 +749,10 @@ class BasketTimer {
     
     testDesktopVoice() {
         try {
-            const testUtterance = new SpeechSynthesisUtterance('準備完了');
-            testUtterance.volume = 0.5;
-            testUtterance.rate = 1.5;
+            // デスクトップでは音声テストを無音で実行
+            const testUtterance = new SpeechSynthesisUtterance('テスト');
+            testUtterance.volume = 0.01; // 極小音量
+            testUtterance.rate = 10; // 高速再生
             testUtterance.lang = 'ja-JP';
             
             if (this.selectedVoice) {
@@ -872,64 +876,13 @@ class BasketTimer {
     }
     
     announce(text) {
-        const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent);
-        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-        const isDesktop = !isMobileDevice && !isTouchDevice;
-        
-        if (isDesktop) {
-            // デスクトップでは直接音声合成を実行（キューを使わない）
-            this.speakDirectly(text);
-        } else {
-            // モバイル・タブレットでは従来のキューシステムを使用
-            this.voiceQueue.push(text);
-            if (!this.isAnnouncing) {
-                this.processVoiceQueue();
-            }
+        // 全デバイスで統一されたキューシステムを使用
+        this.voiceQueue.push(text);
+        if (!this.isAnnouncing) {
+            this.processVoiceQueue();
         }
     }
     
-    speakDirectly(text) {
-        try {
-            speechSynthesis.cancel(); // 前の音声をキャンセル
-            
-            // 少し待ってから新しい音声を開始
-            setTimeout(() => {
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'ja-JP';
-                utterance.rate = 1.0;
-                utterance.pitch = 1.0;
-                utterance.volume = 1.0;
-                
-                // 音声選択を再確認
-                if (!this.selectedVoice) {
-                    this.selectVoice();
-                }
-                
-                if (this.selectedVoice) {
-                    utterance.voice = this.selectedVoice;
-                    console.log('Desktop speech with voice:', this.selectedVoice.name, '- Text:', text);
-                } else {
-                    console.log('Desktop speech with default voice - Text:', text);
-                }
-                
-                utterance.onstart = () => {
-                    console.log('Desktop speech started:', text);
-                };
-                
-                utterance.onend = () => {
-                    console.log('Desktop speech ended:', text);
-                };
-                
-                utterance.onerror = (event) => {
-                    console.warn('Desktop speech error:', event.error, '- Text:', text);
-                };
-                
-                speechSynthesis.speak(utterance);
-            }, 50);
-        } catch (error) {
-            console.warn('Desktop speech failed:', error);
-        }
-    }
     
     processVoiceQueue() {
         if (this.voiceQueue.length === 0) {
