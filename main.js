@@ -17,6 +17,10 @@ class BasketTimer {
         this.noSleepEnabled = false;
         this.activitySimulationInterval = null;
         
+        this.isIntervalMode = false;
+        this.intervalPhase = 0; // 0: 7分, 1: 2分
+        this.totalCycles = 0;
+        
         this.minutesValue = 10;
         this.secondsValue = 0;
         
@@ -42,6 +46,7 @@ class BasketTimer {
         this.startBtn = document.getElementById('startBtn');
         this.stopBtn = document.getElementById('stopBtn');
         this.cancelBtn = document.getElementById('cancelBtn');
+        this.intervalBtn = document.getElementById('intervalBtn');
         this.timeRemaining = document.getElementById('timeRemaining');
         this.buzzer = document.getElementById('buzzer');
         this.silentAudio = document.getElementById('silentAudio');
@@ -343,6 +348,10 @@ class BasketTimer {
             
             this.startTimer();
         });
+        
+        this.intervalBtn.addEventListener('click', () => {
+            this.toggleIntervalMode();
+        });
         this.stopBtn.addEventListener('click', () => this.toggleTimer());
         this.cancelBtn.addEventListener('click', () => this.cancelTimer());
         
@@ -386,6 +395,30 @@ class BasketTimer {
                 this.updateSecondsWheel();
             }, 400);
         });
+    }
+    
+    toggleIntervalMode() {
+        this.isIntervalMode = !this.isIntervalMode;
+        
+        if (this.isIntervalMode) {
+            this.intervalBtn.classList.add('active');
+            this.intervalBtn.textContent = '7分→2分 OFF';
+            this.intervalPhase = 0;
+            this.totalCycles = 0;
+            // 7分に設定
+            this.minutesValue = 7;
+            this.secondsValue = 0;
+            this.updateMinutesWheel();
+            this.updateSecondsWheel();
+        } else {
+            this.intervalBtn.classList.remove('active');
+            this.intervalBtn.textContent = '7分→2分 繰り返し';
+            // 通常モードに戻す
+            this.minutesValue = 10;
+            this.secondsValue = 0;
+            this.updateMinutesWheel();
+            this.updateSecondsWheel();
+        }
     }
     
     initAudio() {
@@ -668,8 +701,15 @@ class BasketTimer {
         
         // 初回開始時のみ時間設定を取得
         if (this.currentSeconds === 0) {
-            this.totalSeconds = this.minutesValue * 60 + this.secondsValue;
-            this.currentSeconds = this.totalSeconds;
+            if (this.isIntervalMode) {
+                // インターバルモードの場合は現在のフェーズに応じて時間を設定
+                const currentTime = this.intervalPhase === 0 ? 7 * 60 : 2 * 60;
+                this.totalSeconds = currentTime;
+                this.currentSeconds = currentTime;
+            } else {
+                this.totalSeconds = this.minutesValue * 60 + this.secondsValue;
+                this.currentSeconds = this.totalSeconds;
+            }
             
             if (this.currentSeconds <= 0) return;
             
@@ -807,8 +847,16 @@ class BasketTimer {
         }
         
         this.currentSeconds = 0;
-        this.minutesValue = 10;
-        this.secondsValue = 0;
+        
+        if (this.isIntervalMode) {
+            // インターバルモードの場合は7分に戻す
+            this.intervalPhase = 0;
+            this.minutesValue = 7;
+            this.secondsValue = 0;
+        } else {
+            this.minutesValue = 10;
+            this.secondsValue = 0;
+        }
         this.updateMinutesWheel();
         this.updateSecondsWheel();
         
@@ -913,7 +961,35 @@ class BasketTimer {
         // ブザー音を再生（非同期、エラーが発生しても続行）
         this.playBuzzer();
         
-        // タイマー終了後に設定画面に戻る
+        if (this.isIntervalMode) {
+            // インターバルモードの場合は次のフェーズに進む
+            this.handleIntervalTransition();
+        } else {
+            // 通常モードの場合は設定画面に戻る
+            this.returnToSetup();
+        }
+    }
+    
+    handleIntervalTransition() {
+        // フェーズを切り替え
+        this.intervalPhase = this.intervalPhase === 0 ? 1 : 0;
+        if (this.intervalPhase === 0) {
+            this.totalCycles++;
+        }
+        
+        const phaseName = this.intervalPhase === 0 ? '7分' : '2分';
+        this.announce(`${phaseName}開始`);
+        
+        console.log(`Interval transition to phase ${this.intervalPhase} (${phaseName}), cycle ${this.totalCycles}`);
+        
+        // 2秒後に次のタイマーを開始
+        setTimeout(() => {
+            this.currentSeconds = 0; // リセットして新しい時間を設定
+            this.startTimer();
+        }, 2000);
+    }
+    
+    returnToSetup() {
         console.log('Setting timeout to return to setup screen');
         setTimeout(() => {
             console.log('Returning to setup screen');
@@ -922,13 +998,15 @@ class BasketTimer {
             
             // タイマーをリセット
             this.currentSeconds = 0;
-            this.minutesValue = 10;
-            this.secondsValue = 0;
-            this.updateMinutesWheel();
-            this.updateSecondsWheel();
+            if (!this.isIntervalMode) {
+                this.minutesValue = 10;
+                this.secondsValue = 0;
+                this.updateMinutesWheel();
+                this.updateSecondsWheel();
+            }
             
             // ボタンの状態をリセット
-            this.stopBtn.textContent = 'Stop';
+            this.stopBtn.innerHTML = '❚❚';
             this.stopBtn.style.color = '#ff9500';
             this.stopBtn.style.borderColor = '#ff9500';
             console.log('Setup screen restored');
