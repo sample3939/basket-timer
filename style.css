@@ -669,6 +669,12 @@ body {
         font-size: 16px;
     }
     
+    .interval-btn {
+        padding: 14px;
+        font-size: 15px;
+        margin: 0 auto 12px auto;
+    }
+    
     .control-buttons {
         gap: 30px;
         position: fixed !important;
@@ -759,6 +765,14 @@ body {
         padding: 22px 40px !important;
         font-size: 20px !important;
         max-width: 400px !important;
+        border-radius: 60px !important;
+    }
+    
+    .interval-btn {
+        padding: 18px 35px !important;
+        font-size: 18px !important;
+        max-width: 400px !important;
+        margin: 0 auto 20px auto !important;
         border-radius: 60px !important;
     }
 }
