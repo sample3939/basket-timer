@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#1c1c1e">
+    <title>BasketTimer</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='240' fill='%23ff6600'/%3E%3Cpath d='M256 96c-9 0-16 7-16 16v144c0 9 7 16 16 16s16-7 16-16V112c0-9-7-16-16-16z' fill='%23000'/%3E%3C/svg%3E">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BasketTimer">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="screen-orientation" content="portrait">
+    <meta name="apple-touch-fullscreen" content="yes">
+</head>
+<body>
+    <div class="container">
+        <div class="timer-setup" id="timerSetup">
+            <div class="picker-container">
+                <div class="picker-wheel-section">
+                    <div class="picker-wheel" id="minutesWheel">
+                        <div class="wheel-overlay"></div>
+                        <div class="wheel-items" id="minutesItems"></div>
+                        <div class="wheel-selection-indicator">
+                            <span class="selection-label">分</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="picker-wheel-section">
+                    <div class="picker-wheel" id="secondsWheel">
+                        <div class="wheel-overlay"></div>
+                        <div class="wheel-items" id="secondsItems"></div>
+                        <div class="wheel-selection-indicator">
+                            <span class="selection-label">秒</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="preset-buttons">
+                <button class="preset-btn" data-time="420">7:00</button>
+                <button class="preset-btn" data-time="600">10:00</button>
+                <button class="preset-btn" data-time="60">1:00</button>
+                <button class="preset-btn" data-time="120">2:00</button>
+            </div>
+            
+            <button class="start-btn" id="startBtn">Start</button>
+        </div>
+        
+        <div class="timer-display hidden" id="timerDisplay">
+            <div class="time-remaining" id="timeRemaining">10:00</div>
+            <div class="control-buttons">
+                <button class="control-btn stop-btn" id="stopBtn">❚❚</button>
+                <button class="control-btn cancel-btn" id="cancelBtn">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
+    <audio id="buzzer" preload="auto" volume="1.0">
+        <source src="assets/basketball_buzzer2.mp3" type="audio/mpeg">
+    </audio>
+    
+    <audio id="silentAudio" loop muted preload="auto">
+        <source src="data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU2LjM2LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMPDw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8PDw8P//////////////////////////8AAAAATGF2YzU2LjQxAAAAAAAAAAAAAAAAJAAAAAAAAAAAASDs90hvAAAAAAAAAAAAAAAAAAAA//OEZAAADwAABHiAAARYCAABHiAABRYCAAERdgAABRYCAABHiAABR/4P/nzWxcAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPfU/8" type="audio/mpeg">
+    </audio>
+    
+    <script src="nosleep.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

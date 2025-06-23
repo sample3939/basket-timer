@@ -1,0 +1,21 @@
+{
+  "name": "BasketTimer",
+  "short_name": "BasketTimer",
+  "description": "Basketball Timer App with Voice Announcements",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#1c1c1e",
+  "background_color": "#1c1c1e",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Ccircle cx='256' cy='256' r='240' fill='%23ff6600'/%3E%3Cpath d='M256 16c-53 0-104 21-141 58S58 149 58 202v108c0 53 21 104 58 141s88 58 141 58 104-21 141-58 58-88 58-141V202c0-53-21-104-58-141S309 16 256 16zm0 448c-44 0-86-17-117-48s-48-73-48-117V202c0-44 17-86 48-117s73-48 117-48 86 17 117 48 48 73 48 117v108c0 44-17 86-48 117s-73 48-117 48z' fill='%23000'/%3E%3Cpath d='M256 96c-9 0-16 7-16 16v144c0 9 7 16 16 16s16-7 16-16V112c0-9-7-16-16-16z' fill='%23000'/%3E%3Cpath d='M256 288c-9 0-16 7-16 16v32c0 9 7 16 16 16s16-7 16-16v-32c0-9-7-16-16-16z' fill='%23000'/%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["sports", "utilities", "productivity"],
+  "lang": "ja",
+  "scope": "./",
+  "prefer_related_applications": false
+}
