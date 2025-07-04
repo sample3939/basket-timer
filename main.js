@@ -18,7 +18,7 @@ class BasketTimer {
         this.activitySimulationInterval = null;
         
         this.isIntervalMode = false;
-        this.intervalPhase = 0; // 0: 7分, 1: 2分
+        this.intervalPhase = 0; // 0: 7分, 1: 3分
         this.totalCycles = 0;
         
         this.minutesValue = 10;
@@ -402,7 +402,7 @@ class BasketTimer {
         
         if (this.isIntervalMode) {
             this.intervalBtn.classList.add('active');
-            this.intervalBtn.textContent = '7分→2分 OFF';
+            this.intervalBtn.textContent = '7分→3分 OFF';
             this.intervalPhase = 0;
             this.totalCycles = 0;
             // 7分に設定
@@ -412,7 +412,7 @@ class BasketTimer {
             this.updateSecondsWheel();
         } else {
             this.intervalBtn.classList.remove('active');
-            this.intervalBtn.textContent = '7分→2分 繰り返し';
+            this.intervalBtn.textContent = '7分→3分 繰り返し';
             // 通常モードに戻す
             this.minutesValue = 10;
             this.secondsValue = 0;
@@ -703,7 +703,7 @@ class BasketTimer {
         if (this.currentSeconds === 0) {
             if (this.isIntervalMode) {
                 // インターバルモードの場合は現在のフェーズに応じて時間を設定
-                const currentTime = this.intervalPhase === 0 ? 7 * 60 : 2 * 60;
+                const currentTime = this.intervalPhase === 0 ? 7 * 60 : 3 * 60;
                 this.totalSeconds = currentTime;
                 this.currentSeconds = currentTime;
             } else {
@@ -977,7 +977,7 @@ class BasketTimer {
             this.totalCycles++;
         }
         
-        const phaseName = this.intervalPhase === 0 ? '7分' : '2分';
+        const phaseName = this.intervalPhase === 0 ? '7分' : '3分';
         this.announce(`${phaseName}開始`);
         
         console.log(`Interval transition to phase ${this.intervalPhase} (${phaseName}), cycle ${this.totalCycles}`);
