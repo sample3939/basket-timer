@@ -11,6 +11,7 @@ class BasketTimer {
         this.lastAnnouncedMinute = -1;
         this.hasAnnounced30Seconds = false;
         this.countdownStarted = false;
+        this.voiceAudios = {};
         this.visibilityChangeListenerAdded = false;
         this.periodicWakeLockInterval = null;
         this.fallbackVideo = null;
@@ -50,6 +51,8 @@ class BasketTimer {
         this.timeRemaining = document.getElementById('timeRemaining');
         this.buzzer = document.getElementById('buzzer');
         this.silentAudio = document.getElementById('silentAudio');
+        
+        this.initVoiceAudios();
         
         this.minutesItems = document.getElementById('minutesItems');
         this.secondsItems = document.getElementById('secondsItems');
@@ -334,11 +337,9 @@ class BasketTimer {
             const isDesktop = !isMobileDevice && !isTouchDevice;
             
             if (isDesktop) {
-                // デスクトップの場合は強化された音声初期化
+                // デスクトップの場合は音声初期化
                 this.initAudioContext();
-                this.selectVoice();
-                this.enableDesktopVoice();
-                console.log('Desktop audio initialization with voice test');
+                console.log('Desktop audio initialization');
             } else {
                 // モバイル・タブレットの場合は従来の処理
                 this.initAudioContext();
@@ -362,16 +363,9 @@ class BasketTimer {
                 const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
                 const isDesktop = !isMobileDevice && !isTouchDevice;
                 
-                if (isDesktop) {
-                    // デスクトップの場合はシンプルな初期化
-                    this.initAudioContext();
-                    this.selectVoice();
-                    console.log('Desktop preset audio initialization');
-                } else {
-                    // モバイル・タブレットの場合
-                    this.initAudioContext();
-                    console.log('Mobile/Tablet preset audio initialization');
-                }
+                // 音声初期化
+                this.initAudioContext();
+                console.log('Audio initialization');
                 
                 const timeInSeconds = parseInt(btn.dataset.time);
                 this.minutesValue = Math.floor(timeInSeconds / 60);
@@ -423,34 +417,41 @@ class BasketTimer {
     
     initAudio() {
         this.buzzer.volume = 1.0; // 最大音量に設定
+    }
+    
+    initVoiceAudios() {
+        const voiceFiles = {
+            '10min': 'assets/10min.mp3',
+            '9min': 'assets/9min.mp3',
+            '8min': 'assets/8min.mp3',
+            '7min': 'assets/7mini.mp3',
+            '6min': 'assets/6mini.mp3',
+            '5min': 'assets/5min.mp3',
+            '4min': 'assets/4min.mp3',
+            '3min': 'assets/3min.mp3',
+            '2min': 'assets/2min.mp3',
+            '1min': 'assets/1min.mp3',
+            '30sec': 'assets/30sec.mp3',
+            '10': 'assets/10.mp3',
+            '9': 'assets/9.mp3',
+            '8': 'assets/8.mp3',
+            '7': 'assets/7.mp3',
+            '6': 'assets/6.mp3',
+            '5': 'assets/5.mp3',
+            '4': 'assets/4.mp3',
+            '3': 'assets/3.mp3',
+            '2': 'assets/2.mp3',
+            '1': 'assets/1.mp3'
+        };
         
-        // 音声リスト取得を確実に実行
-        this.loadVoices();
-        
-        speechSynthesis.addEventListener('voiceschanged', () => {
-            this.selectVoice();
+        Object.keys(voiceFiles).forEach(key => {
+            const audio = new Audio(voiceFiles[key]);
+            audio.volume = 1.0;
+            audio.preload = 'auto';
+            this.voiceAudios[key] = audio;
         });
     }
     
-    loadVoices() {
-        // 音声リストが空の場合は強制的に読み込み
-        if (speechSynthesis.getVoices().length === 0) {
-            speechSynthesis.speak(new SpeechSynthesisUtterance(''));
-            speechSynthesis.cancel();
-        }
-        
-        setTimeout(() => {
-            this.selectVoice();
-            console.log('Available voices:', speechSynthesis.getVoices().length);
-        }, 100);
-    }
-    
-    selectVoice() {
-        const voices = speechSynthesis.getVoices();
-        this.selectedVoice = voices.find(voice => 
-            /女性|Female|Kyoko|Google 日本語/.test(voice.name) && voice.lang.includes('ja')
-        ) || voices.find(voice => voice.lang.includes('ja')) || voices[0];
-    }
     
     async initAudioContext() {
         try {
@@ -476,47 +477,13 @@ class BasketTimer {
             this.buzzer.load(); // 音声ファイルを読み込むだけ
             console.log('Audio test successful - buzzer loaded without playing');
             
-            // 音声合成の確実な初期化
-            await this.initSpeechSynthesis();
+            // 音声ファイルの準備
+            console.log('Voice audio files prepared');
         } catch (error) {
             console.warn('Audio test failed:', error);
         }
     }
     
-    async initSpeechSynthesis() {
-        return new Promise((resolve) => {
-            // 音声リストを先に取得
-            this.selectVoice();
-            
-            const testUtterance = new SpeechSynthesisUtterance('');
-            testUtterance.volume = 0; // 完全に無音
-            testUtterance.rate = 10; // 高速再生
-            
-            if (this.selectedVoice) {
-                testUtterance.voice = this.selectedVoice;
-            }
-            testUtterance.lang = 'ja-JP';
-            
-            testUtterance.onend = () => {
-                console.log('Speech synthesis initialized successfully');
-                resolve();
-            };
-            
-            testUtterance.onerror = () => {
-                console.log('Speech synthesis initialization completed (with error)');
-                resolve();
-            };
-            
-            // タイムアウト設定
-            setTimeout(() => {
-                speechSynthesis.cancel();
-                console.log('Speech synthesis initialization completed (timeout)');
-                resolve();
-            }, 500);
-            
-            speechSynthesis.speak(testUtterance);
-        });
-    }
     
     async registerServiceWorker() {
         if ('serviceWorker' in navigator) {
@@ -686,18 +653,9 @@ class BasketTimer {
             });
         }
         
-        // デバイス別の音声初期化
-        if (isDesktop) {
-            // デスクトップの音声初期化を強化
-            this.initAudioContext();
-            this.selectVoice();
-            this.enableDesktopVoice();
-            console.log('Desktop timer start - enhanced audio initialization');
-        } else {
-            // モバイル・タブレットは従来の音声初期化
-            this.enableVoiceForTimer();
-            console.log('Mobile/Tablet timer start - standard audio initialization');
-        }
+        // 音声初期化
+        this.initAudioContext();
+        console.log('Timer start - audio initialization');
         
         // 初回開始時のみ時間設定を取得
         if (this.currentSeconds === 0) {
@@ -737,53 +695,7 @@ class BasketTimer {
         }, 1000);
     }
     
-    enableVoiceForTimer() {
-        // 無音でのテスト発話で音声を有効化
-        try {
-            // 音声合成の確実な初期化
-            this.selectVoice(); // 音声選択を再実行
-            
-            const enableUtterance = new SpeechSynthesisUtterance('');
-            enableUtterance.volume = 0;
-            enableUtterance.rate = 10;
-            enableUtterance.lang = 'ja-JP';
-            
-            if (this.selectedVoice) {
-                enableUtterance.voice = this.selectedVoice;
-                console.log('Voice selected for enablement:', this.selectedVoice.name);
-            } else {
-                console.warn('No voice selected, using default');
-            }
-            
-            speechSynthesis.speak(enableUtterance);
-            speechSynthesis.cancel();
-            console.log('Voice enablement completed');
-        } catch (error) {
-            console.warn('Voice enablement failed:', error);
-        }
-    }
     
-    enableDesktopVoice() {
-        // デスクトップ専用の音声初期化
-        try {
-            console.log('Desktop voice initialization started');
-            
-            // 音声リストを確実に取得
-            if (speechSynthesis.getVoices().length === 0) {
-                speechSynthesis.speak(new SpeechSynthesisUtterance(''));
-                speechSynthesis.cancel();
-                
-                // 少し待ってから再試行
-                setTimeout(() => {
-                    this.selectVoice();
-                }, 100);
-            } else {
-                this.selectVoice();
-            }
-        } catch (error) {
-            console.warn('Desktop voice initialization failed:', error);
-        }
-    }
     
     
     toggleTimer() {
@@ -876,13 +788,13 @@ class BasketTimer {
         const minutes = Math.floor(this.currentSeconds / 60);
         const seconds = this.currentSeconds % 60;
         
-        if (seconds === 0 && minutes > 0 && minutes !== this.lastAnnouncedMinute) {
-            this.announce(`残り${minutes}分`);
+        if (seconds === 0 && minutes > 0 && minutes <= 10 && minutes !== this.lastAnnouncedMinute) {
+            this.announce(`${minutes}min`);
             this.lastAnnouncedMinute = minutes;
         }
         
         if (this.currentSeconds === 30 && !this.hasAnnounced30Seconds) {
-            this.announce('残り30秒');
+            this.announce('30sec');
             this.hasAnnounced30Seconds = true;
         }
         
@@ -895,9 +807,9 @@ class BasketTimer {
         }
     }
     
-    announce(text) {
-        // 全デバイスで統一されたキューシステムを使用
-        this.voiceQueue.push(text);
+    announce(audioKey) {
+        // 音声ファイルでのアナウンス
+        this.voiceQueue.push(audioKey);
         if (!this.isAnnouncing) {
             this.processVoiceQueue();
         }
@@ -911,38 +823,37 @@ class BasketTimer {
         }
         
         this.isAnnouncing = true;
-        speechSynthesis.cancel();
         
-        const text = this.voiceQueue.shift();
-        console.log('Processing voice queue for text:', text);
+        const audioKey = this.voiceQueue.shift();
+        console.log('Processing voice queue for audio:', audioKey);
         
-        const utterance = new SpeechSynthesisUtterance(text);
-        
-        if (this.selectedVoice) {
-            utterance.voice = this.selectedVoice;
-            console.log('Using voice:', this.selectedVoice.name);
+        const audio = this.voiceAudios[audioKey];
+        if (audio) {
+            audio.currentTime = 0;
+            audio.play().then(() => {
+                console.log('Voice audio played successfully:', audioKey);
+            }).catch(error => {
+                console.warn('Voice audio play failed:', error);
+            });
+            
+            audio.onended = () => {
+                setTimeout(() => this.processVoiceQueue(), 100);
+            };
+            
+            audio.onerror = () => {
+                setTimeout(() => this.processVoiceQueue(), 100);
+            };
         } else {
-            console.log('No voice selected, using default');
+            console.warn('Audio not found for key:', audioKey);
+            setTimeout(() => this.processVoiceQueue(), 100);
         }
-        
-        utterance.lang = 'ja-JP';
-        utterance.rate = 1.0;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0; // 最大音量に変更
-        
-        utterance.onend = () => {
-            setTimeout(() => this.processVoiceQueue(), 100);
-        };
-        
-        utterance.onerror = () => {
-            setTimeout(() => this.processVoiceQueue(), 100);
-        };
-        
-        speechSynthesis.speak(utterance);
     }
     
     stopAllAnnouncements() {
-        speechSynthesis.cancel();
+        Object.values(this.voiceAudios).forEach(audio => {
+            audio.pause();
+            audio.currentTime = 0;
+        });
         this.voiceQueue = [];
         this.isAnnouncing = false;
     }
@@ -978,7 +889,7 @@ class BasketTimer {
         }
         
         const phaseName = this.intervalPhase === 0 ? '7分' : '3分';
-        this.announce(`${phaseName}開始`);
+        console.log(`${phaseName}開始`);
         
         console.log(`Interval transition to phase ${this.intervalPhase} (${phaseName}), cycle ${this.totalCycles}`);
         

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>QRコード - スマホアクセス用</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 50px; 
+            background: #f0f0f0;
+        }
+        .qr-container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            display: inline-block;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        .url { 
+            font-size: 18px; 
+            color: #666; 
+            margin: 20px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="qr-container">
+        <h1>🏀 バスケタイマー</h1>
+        <p>スマホのカメラでQRコードを読み取ってアクセス</p>
+        
+        <!-- QRコード画像 -->
+        <div id="qrcode"></div>
+        
+        <div class="url">
+            http://192.168.0.18:8888
+        </div>
+        
+        <p><small>または上記URLを直接ブラウザに入力</small></p>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script>
+        QRCode.toCanvas(document.getElementById('qrcode'), 'http://192.168.0.18:8888', {
+            width: 256,
+            margin: 2,
+            color: {
+                dark: '#000000',
+                light: '#FFFFFF'
+            }
+        });
+    </script>
+</body>
+</html>
