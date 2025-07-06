@@ -493,10 +493,33 @@ class BasketTimer {
             this.buzzer.load(); // 音声ファイルを読み込むだけ
             console.log('Audio test successful - buzzer loaded without playing');
             
-            // 音声ファイルの準備
-            console.log('Voice audio files prepared');
+            // 音声ファイルの準備とユーザーインタラクション
+            await this.enableVoiceAudios();
+            console.log('Voice audio files prepared and enabled');
         } catch (error) {
             console.warn('Audio test failed:', error);
+        }
+    }
+    
+    async enableVoiceAudios() {
+        // モバイルブラウザでの音声再生を有効化するため、各音声ファイルを無音で一度再生
+        console.log('Enabling voice audios for mobile browsers...');
+        
+        for (const [key, audio] of Object.entries(this.voiceAudios)) {
+            try {
+                const originalVolume = audio.volume;
+                audio.volume = 0; // 無音に設定
+                audio.currentTime = 0;
+                
+                await audio.play();
+                audio.pause();
+                audio.currentTime = 0;
+                audio.volume = originalVolume; // 音量を元に戻す
+                
+                console.log(`✓ Voice audio enabled: ${key}`);
+            } catch (error) {
+                console.warn(`✗ Voice audio enable failed: ${key}`, error);
+            }
         }
     }
     
