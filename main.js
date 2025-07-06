@@ -874,34 +874,56 @@ class BasketTimer {
                 return;
             }
             
-            // 即座にsrcを変更（読み込み時間を最小化）
-            this.buzzer.src = voiceFile;
-            this.buzzer.load(); // 強制的に読み込み
+            // モバイルデバイス判定
+            const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent);
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const isMobile = isMobileDevice || isTouchDevice;
             
-            // ブザーと全く同じコード
+            // srcを変更
+            this.buzzer.src = voiceFile;
             this.buzzer.volume = 1.0;
             this.buzzer.currentTime = 0;
             
             // Web Audio APIでゲインを追加（ブザーと同じ）
             this.setupBuzzerGain();
             
-            // 即座に再生開始
-            const playPromise = this.buzzer.play();
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    console.log('Voice played successfully with buzzer:', audioKey);
-                    // 再生終了後にブザーのsrcを元に戻す
-                    this.buzzer.onended = () => {
+            if (isMobile) {
+                // モバイル: 音声が完全に読み込まれてから再生
+                this.buzzer.addEventListener('canplaythrough', () => {
+                    this.buzzer.play().then(() => {
+                        console.log('Voice played successfully with buzzer (mobile):', audioKey);
+                        // 再生終了後にブザーのsrcを元に戻す
+                        this.buzzer.onended = () => {
+                            this.buzzer.src = this.buzzerOriginalSrc;
+                            this.buzzer.load();
+                            this.buzzer.onended = null;
+                        };
+                    }).catch(error => {
+                        console.warn('Voice play failed (mobile):', audioKey, error);
                         this.buzzer.src = this.buzzerOriginalSrc;
-                        this.buzzer.load(); // 元ファイルも読み込み
-                        this.buzzer.onended = null;
-                    };
-                }).catch(error => {
-                    console.warn('Voice play failed:', audioKey, error);
-                    // エラー時もsrcを元に戻す
-                    this.buzzer.src = this.buzzerOriginalSrc;
-                    this.buzzer.load();
-                });
+                        this.buzzer.load();
+                    });
+                }, { once: true });
+                
+                this.buzzer.load(); // 読み込み開始
+            } else {
+                // デスクトップ: 即座に再生
+                const playPromise = this.buzzer.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        console.log('Voice played successfully with buzzer (desktop):', audioKey);
+                        // 再生終了後にブザーのsrcを元に戻す
+                        this.buzzer.onended = () => {
+                            this.buzzer.src = this.buzzerOriginalSrc;
+                            this.buzzer.load();
+                            this.buzzer.onended = null;
+                        };
+                    }).catch(error => {
+                        console.warn('Voice play failed (desktop):', audioKey, error);
+                        this.buzzer.src = this.buzzerOriginalSrc;
+                        this.buzzer.load();
+                    });
+                }
             }
         } catch (error) {
             console.warn('Voice play failed:', audioKey, error);
