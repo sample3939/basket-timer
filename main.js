@@ -439,7 +439,14 @@ class BasketTimer {
     }
     
     initAudio() {
-        this.buzzer.volume = 1.0; // 最大音量に設定
+        this.buzzer.volume = 1.0;
+        // 専用音声要素も初期化
+        Object.values(this.voiceElements).forEach(voiceElement => {
+            if (voiceElement) {
+                voiceElement.volume = 1.0;
+                voiceElement.preload = 'auto';
+            }
+        });
     }
     
     
@@ -464,12 +471,27 @@ class BasketTimer {
     async testAudio() {
         try {
             // ブザー音の準備（再生せずに準備のみ）
-            this.buzzer.volume = 1.0; // 最大音量に設定
-            this.buzzer.load(); // 音声ファイルを読み込むだけ
+            this.buzzer.volume = 1.0;
+            this.buzzer.load();
             console.log('Audio test successful - buzzer loaded without playing');
             
-            // 音声要素の準備
-            console.log('Voice elements prepared');
+            // 専用音声要素をモバイル用に有効化
+            Object.values(this.voiceElements).forEach(async (voiceElement) => {
+                if (voiceElement) {
+                    try {
+                        voiceElement.volume = 0.001; // 最小音量で無音再生
+                        voiceElement.currentTime = 0;
+                        await voiceElement.play();
+                        voiceElement.pause();
+                        voiceElement.currentTime = 0;
+                        voiceElement.volume = 1.0; // 音量を戻す
+                        console.log('Voice element activated for mobile:', voiceElement.id);
+                    } catch (error) {
+                        console.warn('Voice element activation failed:', voiceElement.id, error);
+                    }
+                }
+            });
+            console.log('Voice elements prepared and activated for mobile');
         } catch (error) {
             console.warn('Audio test failed:', error);
         }
@@ -846,17 +868,38 @@ class BasketTimer {
                 return;
             }
             
+            // モバイルデバイス判定
+            const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent);
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const isMobile = isMobileDevice || isTouchDevice;
+            
             // 専用の音声要素を使用
             voiceElement.volume = 1.0;
             voiceElement.currentTime = 0;
             
-            const playPromise = voiceElement.play();
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    console.log('Voice played successfully with dedicated element:', audioKey);
-                }).catch(error => {
-                    console.warn('Voice play failed:', audioKey, error);
-                });
+            if (isMobile) {
+                // モバイル: load()を明示的に呼んでから再生
+                voiceElement.load();
+                setTimeout(() => {
+                    const playPromise = voiceElement.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            console.log('Voice played successfully (mobile):', audioKey);
+                        }).catch(error => {
+                            console.warn('Voice play failed (mobile):', audioKey, error);
+                        });
+                    }
+                }, 50); // 50ms遅延
+            } else {
+                // デスクトップ: 即座に再生
+                const playPromise = voiceElement.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        console.log('Voice played successfully (desktop):', audioKey);
+                    }).catch(error => {
+                        console.warn('Voice play failed (desktop):', audioKey, error);
+                    });
+                }
             }
         } catch (error) {
             console.warn('Voice play failed:', audioKey, error);
