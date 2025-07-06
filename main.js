@@ -444,10 +444,26 @@ class BasketTimer {
             '1': 'assets/1.mp3'
         };
         
+        // 音声ファイルの読み込み確認とデバッグ
+        console.log('Initializing voice audio files...');
+        Object.keys(voiceFiles).forEach(key => {
+            console.log(`Loading: ${key} -> ${voiceFiles[key]}`);
+        });
+        
         Object.keys(voiceFiles).forEach(key => {
             const audio = new Audio(voiceFiles[key]);
             audio.volume = 1.0;
             audio.preload = 'auto';
+            
+            // 音声ファイルの読み込み状況を監視
+            audio.addEventListener('loadeddata', () => {
+                console.log(`✓ Audio loaded successfully: ${key}`);
+            });
+            
+            audio.addEventListener('error', (e) => {
+                console.error(`✗ Audio load failed: ${key} - ${voiceFiles[key]}`, e);
+            });
+            
             this.voiceAudios[key] = audio;
         });
     }
@@ -829,22 +845,31 @@ class BasketTimer {
         
         const audio = this.voiceAudios[audioKey];
         if (audio) {
+            console.log(`🔊 Attempting to play audio: ${audioKey}, readyState: ${audio.readyState}`);
             audio.currentTime = 0;
-            audio.play().then(() => {
-                console.log('Voice audio played successfully:', audioKey);
-            }).catch(error => {
-                console.warn('Voice audio play failed:', error);
-            });
+            
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    console.log('✓ Voice audio played successfully:', audioKey);
+                }).catch(error => {
+                    console.error('✗ Voice audio play failed:', audioKey, error);
+                    // エラー時も次に進む
+                    setTimeout(() => this.processVoiceQueue(), 100);
+                });
+            }
             
             audio.onended = () => {
+                console.log(`🏁 Audio ended: ${audioKey}`);
                 setTimeout(() => this.processVoiceQueue(), 100);
             };
             
-            audio.onerror = () => {
+            audio.onerror = (e) => {
+                console.error(`💥 Audio error during playback: ${audioKey}`, e);
                 setTimeout(() => this.processVoiceQueue(), 100);
             };
         } else {
-            console.warn('Audio not found for key:', audioKey);
+            console.error(`❌ Audio not found for key: ${audioKey}. Available keys:`, Object.keys(this.voiceAudios));
             setTimeout(() => this.processVoiceQueue(), 100);
         }
     }
