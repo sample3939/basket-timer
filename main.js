@@ -52,7 +52,30 @@ class BasketTimer {
         this.buzzer = document.getElementById('buzzer');
         this.silentAudio = document.getElementById('silentAudio');
         
-        this.initVoiceAudios();
+        // Voice audio elements - same as buzzer
+        this.voiceElements = {
+            '10min': document.getElementById('voice10min'),
+            '9min': document.getElementById('voice9min'),
+            '8min': document.getElementById('voice8min'),
+            '7min': document.getElementById('voice7min'),
+            '6min': document.getElementById('voice6min'),
+            '5min': document.getElementById('voice5min'),
+            '4min': document.getElementById('voice4min'),
+            '3min': document.getElementById('voice3min'),
+            '2min': document.getElementById('voice2min'),
+            '1min': document.getElementById('voice1min'),
+            '30sec': document.getElementById('voice30sec'),
+            '10': document.getElementById('voice10'),
+            '9': document.getElementById('voice9'),
+            '8': document.getElementById('voice8'),
+            '7': document.getElementById('voice7'),
+            '6': document.getElementById('voice6'),
+            '5': document.getElementById('voice5'),
+            '4': document.getElementById('voice4'),
+            '3': document.getElementById('voice3'),
+            '2': document.getElementById('voice2'),
+            '1': document.getElementById('voice1')
+        };
         
         this.minutesItems = document.getElementById('minutesItems');
         this.secondsItems = document.getElementById('secondsItems');
@@ -417,56 +440,15 @@ class BasketTimer {
     
     initAudio() {
         this.buzzer.volume = 1.0; // 最大音量に設定
+        
+        // Voice elements volume - same as buzzer
+        Object.values(this.voiceElements).forEach(audio => {
+            if (audio) {
+                audio.volume = 1.0;
+            }
+        });
     }
     
-    initVoiceAudios() {
-        const voiceFiles = {
-            '10min': 'assets/10min.mp3',
-            '9min': 'assets/9min.mp3',
-            '8min': 'assets/8min.mp3',
-            '7min': 'assets/7mini.mp3',
-            '6min': 'assets/6mini.mp3',
-            '5min': 'assets/5min.mp3',
-            '4min': 'assets/4min.mp3',
-            '3min': 'assets/3min.mp3',
-            '2min': 'assets/2min.mp3',
-            '1min': 'assets/1min.mp3',
-            '30sec': 'assets/30sec.mp3',
-            '10': 'assets/10.mp3',
-            '9': 'assets/9.mp3',
-            '8': 'assets/8.mp3',
-            '7': 'assets/7.mp3',
-            '6': 'assets/6.mp3',
-            '5': 'assets/5.mp3',
-            '4': 'assets/4.mp3',
-            '3': 'assets/3.mp3',
-            '2': 'assets/2.mp3',
-            '1': 'assets/1.mp3'
-        };
-        
-        // 音声ファイルの読み込み確認とデバッグ
-        console.log('Initializing voice audio files...');
-        Object.keys(voiceFiles).forEach(key => {
-            console.log(`Loading: ${key} -> ${voiceFiles[key]}`);
-        });
-        
-        Object.keys(voiceFiles).forEach(key => {
-            const audio = new Audio(voiceFiles[key]);
-            audio.volume = 1.0;
-            audio.preload = 'auto';
-            
-            // 音声ファイルの読み込み状況を監視
-            audio.addEventListener('loadeddata', () => {
-                console.log(`✓ Audio loaded successfully: ${key}`);
-            });
-            
-            audio.addEventListener('error', (e) => {
-                console.error(`✗ Audio load failed: ${key} - ${voiceFiles[key]}`, e);
-            });
-            
-            this.voiceAudios[key] = audio;
-        });
-    }
     
     
     async initAudioContext() {
@@ -493,35 +475,13 @@ class BasketTimer {
             this.buzzer.load(); // 音声ファイルを読み込むだけ
             console.log('Audio test successful - buzzer loaded without playing');
             
-            // 音声ファイルの準備とユーザーインタラクション
-            await this.enableVoiceAudios();
-            console.log('Voice audio files prepared and enabled');
+            // 音声要素の準備
+            console.log('Voice elements prepared');
         } catch (error) {
             console.warn('Audio test failed:', error);
         }
     }
     
-    async enableVoiceAudios() {
-        // モバイルブラウザでの音声再生を有効化するため、各音声ファイルを無音で一度再生
-        console.log('Enabling voice audios for mobile browsers...');
-        
-        for (const [key, audio] of Object.entries(this.voiceAudios)) {
-            try {
-                const originalVolume = audio.volume;
-                audio.volume = 0; // 無音に設定
-                audio.currentTime = 0;
-                
-                await audio.play();
-                audio.pause();
-                audio.currentTime = 0;
-                audio.volume = originalVolume; // 音量を元に戻す
-                
-                console.log(`✓ Voice audio enabled: ${key}`);
-            } catch (error) {
-                console.warn(`✗ Voice audio enable failed: ${key}`, error);
-            }
-        }
-    }
     
     
     async registerServiceWorker() {
@@ -847,7 +807,7 @@ class BasketTimer {
     }
     
     announce(audioKey) {
-        // 音声ファイルでのアナウンス
+        // ブザーと同じ方式で音声再生
         this.voiceQueue.push(audioKey);
         if (!this.isAnnouncing) {
             this.processVoiceQueue();
@@ -864,43 +824,43 @@ class BasketTimer {
         this.isAnnouncing = true;
         
         const audioKey = this.voiceQueue.shift();
-        console.log('Processing voice queue for audio:', audioKey);
+        console.log('Playing voice:', audioKey);
         
-        const audio = this.voiceAudios[audioKey];
+        const audio = this.voiceElements[audioKey];
         if (audio) {
-            console.log(`🔊 Attempting to play audio: ${audioKey}, readyState: ${audio.readyState}`);
+            // ブザーと全く同じ方式
+            audio.volume = 1.0;
             audio.currentTime = 0;
             
             const playPromise = audio.play();
             if (playPromise !== undefined) {
                 playPromise.then(() => {
-                    console.log('✓ Voice audio played successfully:', audioKey);
+                    console.log('✓ Voice played successfully:', audioKey);
                 }).catch(error => {
-                    console.error('✗ Voice audio play failed:', audioKey, error);
-                    // エラー時も次に進む
+                    console.warn('✗ Voice play failed:', audioKey, error);
                     setTimeout(() => this.processVoiceQueue(), 100);
                 });
             }
             
             audio.onended = () => {
-                console.log(`🏁 Audio ended: ${audioKey}`);
                 setTimeout(() => this.processVoiceQueue(), 100);
             };
             
-            audio.onerror = (e) => {
-                console.error(`💥 Audio error during playback: ${audioKey}`, e);
+            audio.onerror = () => {
                 setTimeout(() => this.processVoiceQueue(), 100);
             };
         } else {
-            console.error(`❌ Audio not found for key: ${audioKey}. Available keys:`, Object.keys(this.voiceAudios));
+            console.warn('Voice element not found:', audioKey);
             setTimeout(() => this.processVoiceQueue(), 100);
         }
     }
     
     stopAllAnnouncements() {
-        Object.values(this.voiceAudios).forEach(audio => {
-            audio.pause();
-            audio.currentTime = 0;
+        Object.values(this.voiceElements).forEach(audio => {
+            if (audio) {
+                audio.pause();
+                audio.currentTime = 0;
+            }
         });
         this.voiceQueue = [];
         this.isAnnouncing = false;
