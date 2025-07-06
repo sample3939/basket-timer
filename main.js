@@ -807,52 +807,65 @@ class BasketTimer {
     }
     
     announce(audioKey) {
-        // ブザーと同じ方式で音声再生
-        this.voiceQueue.push(audioKey);
-        if (!this.isAnnouncing) {
-            this.processVoiceQueue();
+        // ブザーと全く同じ方式で即座に再生（キューなし）
+        this.playVoice(audioKey);
+    }
+    
+    playVoice(audioKey) {
+        try {
+            const audio = this.voiceElements[audioKey];
+            if (!audio) {
+                console.warn('Voice element not found:', audioKey);
+                return;
+            }
+            
+            // ブザーと全く同じコード
+            audio.volume = 1.0; // 再生前に音量を最大に確認
+            audio.currentTime = 0;
+            
+            // Web Audio APIでゲインを追加（ブザーと同じ）
+            this.setupVoiceGain(audio, audioKey);
+            
+            const playPromise = audio.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    console.log('Voice played successfully:', audioKey);
+                }).catch(error => {
+                    console.warn('Voice play failed:', audioKey, error);
+                });
+            }
+        } catch (error) {
+            console.warn('Voice play failed:', audioKey, error);
+        }
+    }
+    
+    setupVoiceGain(audio, audioKey) {
+        try {
+            if (this.audioContext && !this.voiceGainSetup) {
+                this.voiceGainSetup = {};
+            }
+            
+            if (this.audioContext && !this.voiceGainSetup[audioKey]) {
+                const source = this.audioContext.createMediaElementSource(audio);
+                const gainNode = this.audioContext.createGain();
+                
+                // ゲインを2.0に設定（ブザーと同じ）
+                gainNode.gain.value = 2.0;
+                
+                source.connect(gainNode);
+                gainNode.connect(this.audioContext.destination);
+                
+                this.voiceGainSetup[audioKey] = true;
+                console.log('Voice gain amplification setup completed for:', audioKey);
+            }
+        } catch (error) {
+            console.warn('Voice gain setup failed for:', audioKey, error);
         }
     }
     
     
     processVoiceQueue() {
-        if (this.voiceQueue.length === 0) {
-            this.isAnnouncing = false;
-            return;
-        }
-        
-        this.isAnnouncing = true;
-        
-        const audioKey = this.voiceQueue.shift();
-        console.log('Playing voice:', audioKey);
-        
-        const audio = this.voiceElements[audioKey];
-        if (audio) {
-            // ブザーと全く同じ方式
-            audio.volume = 1.0;
-            audio.currentTime = 0;
-            
-            const playPromise = audio.play();
-            if (playPromise !== undefined) {
-                playPromise.then(() => {
-                    console.log('✓ Voice played successfully:', audioKey);
-                }).catch(error => {
-                    console.warn('✗ Voice play failed:', audioKey, error);
-                    setTimeout(() => this.processVoiceQueue(), 100);
-                });
-            }
-            
-            audio.onended = () => {
-                setTimeout(() => this.processVoiceQueue(), 100);
-            };
-            
-            audio.onerror = () => {
-                setTimeout(() => this.processVoiceQueue(), 100);
-            };
-        } else {
-            console.warn('Voice element not found:', audioKey);
-            setTimeout(() => this.processVoiceQueue(), 100);
-        }
+        // 不要 - 直接再生方式に変更
     }
     
     stopAllAnnouncements() {
@@ -862,8 +875,6 @@ class BasketTimer {
                 audio.currentTime = 0;
             }
         });
-        this.voiceQueue = [];
-        this.isAnnouncing = false;
     }
     
     async endTimer() {
