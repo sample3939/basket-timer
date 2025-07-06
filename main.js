@@ -475,17 +475,18 @@ class BasketTimer {
             this.buzzer.load();
             console.log('Audio test successful - buzzer loaded without playing');
             
-            // 専用音声要素をモバイル用に有効化
+            // 専用音声要素をモバイル用に有効化（完全無音）
             Object.values(this.voiceElements).forEach(async (voiceElement) => {
                 if (voiceElement) {
                     try {
-                        voiceElement.volume = 0.001; // 最小音量で無音再生
+                        voiceElement.muted = true; // 完全にミュート
                         voiceElement.currentTime = 0;
                         await voiceElement.play();
                         voiceElement.pause();
                         voiceElement.currentTime = 0;
-                        voiceElement.volume = 1.0; // 音量を戻す
-                        console.log('Voice element activated for mobile:', voiceElement.id);
+                        voiceElement.muted = false; // ミュート解除
+                        voiceElement.volume = 1.0; // 音量設定
+                        console.log('Voice element activated silently for mobile:', voiceElement.id);
                     } catch (error) {
                         console.warn('Voice element activation failed:', voiceElement.id, error);
                     }
@@ -710,14 +711,19 @@ class BasketTimer {
                 // モバイル: 音声を200ms早く再生してBluetooth遅延を補正
                 setTimeout(() => this.handleAnnouncements(), 0);
                 setTimeout(() => this.updateDisplay(), 200);
+                
+                // モバイル: ブザー音も200ms早く再生（0になる瞬間に合わせる）
+                if (this.currentSeconds <= 0) {
+                    setTimeout(() => this.endTimer(), 0);
+                }
             } else {
                 // デスクトップ: 従来通り
                 this.handleAnnouncements();
                 this.updateDisplay();
-            }
-            
-            if (this.currentSeconds <= 0) {
-                this.endTimer();
+                
+                if (this.currentSeconds <= 0) {
+                    this.endTimer();
+                }
             }
         }, 1000);
     }
@@ -768,14 +774,19 @@ class BasketTimer {
                 // モバイル: 音声を200ms早く再生してBluetooth遅延を補正
                 setTimeout(() => this.handleAnnouncements(), 0);
                 setTimeout(() => this.updateDisplay(), 200);
+                
+                // モバイル: ブザー音も200ms早く再生（0になる瞬間に合わせる）
+                if (this.currentSeconds <= 0) {
+                    setTimeout(() => this.endTimer(), 0);
+                }
             } else {
                 // デスクトップ: 従来通り
                 this.handleAnnouncements();
                 this.updateDisplay();
-            }
-            
-            if (this.currentSeconds <= 0) {
-                this.endTimer();
+                
+                if (this.currentSeconds <= 0) {
+                    this.endTimer();
+                }
             }
         }, 1000);
     }
