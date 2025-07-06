@@ -680,8 +680,10 @@ class BasketTimer {
         
         this.intervalId = setInterval(() => {
             this.currentSeconds--;
-            this.updateDisplay();
+            
+            // 音声アナウンスを表示更新の直前に実行（タイミング同期）
             this.handleAnnouncements();
+            this.updateDisplay();
             
             if (this.currentSeconds <= 0) {
                 this.endTimer();
@@ -725,8 +727,10 @@ class BasketTimer {
         
         this.intervalId = setInterval(() => {
             this.currentSeconds--;
-            this.updateDisplay();
+            
+            // 音声アナウンスを表示更新の直前に実行（タイミング同期）
             this.handleAnnouncements();
+            this.updateDisplay();
             
             if (this.currentSeconds <= 0) {
                 this.endTimer();
@@ -814,8 +818,9 @@ class BasketTimer {
                 return;
             }
             
-            // ブザーのsrcを音声ファイルに変更
+            // 即座にsrcを変更（読み込み時間を最小化）
             this.buzzer.src = voiceFile;
+            this.buzzer.load(); // 強制的に読み込み
             
             // ブザーと全く同じコード
             this.buzzer.volume = 1.0;
@@ -824,6 +829,7 @@ class BasketTimer {
             // Web Audio APIでゲインを追加（ブザーと同じ）
             this.setupBuzzerGain();
             
+            // 即座に再生開始
             const playPromise = this.buzzer.play();
             if (playPromise !== undefined) {
                 playPromise.then(() => {
@@ -831,18 +837,21 @@ class BasketTimer {
                     // 再生終了後にブザーのsrcを元に戻す
                     this.buzzer.onended = () => {
                         this.buzzer.src = this.buzzerOriginalSrc;
+                        this.buzzer.load(); // 元ファイルも読み込み
                         this.buzzer.onended = null;
                     };
                 }).catch(error => {
                     console.warn('Voice play failed:', audioKey, error);
                     // エラー時もsrcを元に戻す
                     this.buzzer.src = this.buzzerOriginalSrc;
+                    this.buzzer.load();
                 });
             }
         } catch (error) {
             console.warn('Voice play failed:', audioKey, error);
             // エラー時もsrcを元に戻す
             this.buzzer.src = this.buzzerOriginalSrc;
+            this.buzzer.load();
         }
     }
     
