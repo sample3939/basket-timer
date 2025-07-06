@@ -681,9 +681,20 @@ class BasketTimer {
         this.intervalId = setInterval(() => {
             this.currentSeconds--;
             
-            // 音声アナウンスを表示更新の直前に実行（タイミング同期）
-            this.handleAnnouncements();
-            this.updateDisplay();
+            // モバイルデバイス判定
+            const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent);
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const isMobile = isMobileDevice || isTouchDevice;
+            
+            if (isMobile) {
+                // モバイル: 音声を200ms早く再生してBluetooth遅延を補正
+                setTimeout(() => this.handleAnnouncements(), 0);
+                setTimeout(() => this.updateDisplay(), 200);
+            } else {
+                // デスクトップ: 従来通り
+                this.handleAnnouncements();
+                this.updateDisplay();
+            }
             
             if (this.currentSeconds <= 0) {
                 this.endTimer();
@@ -728,9 +739,20 @@ class BasketTimer {
         this.intervalId = setInterval(() => {
             this.currentSeconds--;
             
-            // 音声アナウンスを表示更新の直前に実行（タイミング同期）
-            this.handleAnnouncements();
-            this.updateDisplay();
+            // モバイルデバイス判定
+            const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent);
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            const isMobile = isMobileDevice || isTouchDevice;
+            
+            if (isMobile) {
+                // モバイル: 音声を200ms早く再生してBluetooth遅延を補正
+                setTimeout(() => this.handleAnnouncements(), 0);
+                setTimeout(() => this.updateDisplay(), 200);
+            } else {
+                // デスクトップ: 従来通り
+                this.handleAnnouncements();
+                this.updateDisplay();
+            }
             
             if (this.currentSeconds <= 0) {
                 this.endTimer();
@@ -786,6 +808,9 @@ class BasketTimer {
         const minutes = Math.floor(this.currentSeconds / 60);
         const seconds = this.currentSeconds % 60;
         
+        // 次の音声を先読み（モバイル用最適化）
+        this.preloadNextVoice();
+        
         if (seconds === 0 && minutes > 0 && minutes <= 10 && minutes !== this.lastAnnouncedMinute) {
             this.announce(`${minutes}min`);
             this.lastAnnouncedMinute = minutes;
@@ -802,6 +827,37 @@ class BasketTimer {
         
         if (this.countdownStarted && this.currentSeconds <= 10 && this.currentSeconds >= 1) {
             this.announce(this.currentSeconds.toString());
+        }
+    }
+    
+    preloadNextVoice() {
+        // 次に再生される可能性のある音声を先読み
+        const minutes = Math.floor(this.currentSeconds / 60);
+        const seconds = this.currentSeconds % 60;
+        
+        try {
+            // 次の分数アナウンス
+            if (seconds === 1 && minutes > 1 && minutes <= 10) {
+                const nextFile = this.voiceFiles[`${minutes-1}min`];
+                if (nextFile) {
+                    const tempAudio = new Audio(nextFile);
+                    tempAudio.load();
+                }
+            }
+            
+            // 30秒アナウンス
+            if (this.currentSeconds === 31) {
+                const tempAudio = new Audio(this.voiceFiles['30sec']);
+                tempAudio.load();
+            }
+            
+            // カウントダウン
+            if (this.currentSeconds === 11) {
+                const tempAudio = new Audio(this.voiceFiles['10']);
+                tempAudio.load();
+            }
+        } catch (error) {
+            // 先読みエラーは無視
         }
     }
     
