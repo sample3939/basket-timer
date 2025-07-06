@@ -52,30 +52,32 @@ class BasketTimer {
         this.buzzer = document.getElementById('buzzer');
         this.silentAudio = document.getElementById('silentAudio');
         
-        // Voice audio elements - same as buzzer
-        this.voiceElements = {
-            '10min': document.getElementById('voice10min'),
-            '9min': document.getElementById('voice9min'),
-            '8min': document.getElementById('voice8min'),
-            '7min': document.getElementById('voice7min'),
-            '6min': document.getElementById('voice6min'),
-            '5min': document.getElementById('voice5min'),
-            '4min': document.getElementById('voice4min'),
-            '3min': document.getElementById('voice3min'),
-            '2min': document.getElementById('voice2min'),
-            '1min': document.getElementById('voice1min'),
-            '30sec': document.getElementById('voice30sec'),
-            '10': document.getElementById('voice10'),
-            '9': document.getElementById('voice9'),
-            '8': document.getElementById('voice8'),
-            '7': document.getElementById('voice7'),
-            '6': document.getElementById('voice6'),
-            '5': document.getElementById('voice5'),
-            '4': document.getElementById('voice4'),
-            '3': document.getElementById('voice3'),
-            '2': document.getElementById('voice2'),
-            '1': document.getElementById('voice1')
+        // Voice files mapping - use same buzzer element
+        this.voiceFiles = {
+            '10min': 'assets/10min.mp3',
+            '9min': 'assets/9min.mp3',
+            '8min': 'assets/8min.mp3',
+            '7min': 'assets/7mini.mp3',
+            '6min': 'assets/6mini.mp3',
+            '5min': 'assets/5min.mp3',
+            '4min': 'assets/4min.mp3',
+            '3min': 'assets/3min.mp3',
+            '2min': 'assets/2min.mp3',
+            '1min': 'assets/1min.mp3',
+            '30sec': 'assets/30sec.mp3',
+            '10': 'assets/10.mp3',
+            '9': 'assets/9.mp3',
+            '8': 'assets/8.mp3',
+            '7': 'assets/7.mp3',
+            '6': 'assets/6.mp3',
+            '5': 'assets/5.mp3',
+            '4': 'assets/4.mp3',
+            '3': 'assets/3.mp3',
+            '2': 'assets/2.mp3',
+            '1': 'assets/1.mp3'
         };
+        
+        this.buzzerOriginalSrc = 'assets/basketball_buzzer2.mp3';
         
         this.minutesItems = document.getElementById('minutesItems');
         this.secondsItems = document.getElementById('secondsItems');
@@ -440,13 +442,6 @@ class BasketTimer {
     
     initAudio() {
         this.buzzer.volume = 1.0; // 最大音量に設定
-        
-        // Voice elements volume - same as buzzer
-        Object.values(this.voiceElements).forEach(audio => {
-            if (audio) {
-                audio.volume = 1.0;
-            }
-        });
     }
     
     
@@ -807,74 +802,57 @@ class BasketTimer {
     }
     
     announce(audioKey) {
-        // ブザーと全く同じ方式で即座に再生（キューなし）
-        this.playVoice(audioKey);
+        // ブザーと全く同じaudio要素で音声再生
+        this.playVoiceWithBuzzer(audioKey);
     }
     
-    playVoice(audioKey) {
+    playVoiceWithBuzzer(audioKey) {
         try {
-            const audio = this.voiceElements[audioKey];
-            if (!audio) {
-                console.warn('Voice element not found:', audioKey);
+            const voiceFile = this.voiceFiles[audioKey];
+            if (!voiceFile) {
+                console.warn('Voice file not found:', audioKey);
                 return;
             }
             
+            // ブザーのsrcを音声ファイルに変更
+            this.buzzer.src = voiceFile;
+            
             // ブザーと全く同じコード
-            audio.volume = 1.0; // 再生前に音量を最大に確認
-            audio.currentTime = 0;
+            this.buzzer.volume = 1.0;
+            this.buzzer.currentTime = 0;
             
             // Web Audio APIでゲインを追加（ブザーと同じ）
-            this.setupVoiceGain(audio, audioKey);
+            this.setupBuzzerGain();
             
-            const playPromise = audio.play();
+            const playPromise = this.buzzer.play();
             if (playPromise !== undefined) {
                 playPromise.then(() => {
-                    console.log('Voice played successfully:', audioKey);
+                    console.log('Voice played successfully with buzzer:', audioKey);
+                    // 再生終了後にブザーのsrcを元に戻す
+                    this.buzzer.onended = () => {
+                        this.buzzer.src = this.buzzerOriginalSrc;
+                        this.buzzer.onended = null;
+                    };
                 }).catch(error => {
                     console.warn('Voice play failed:', audioKey, error);
+                    // エラー時もsrcを元に戻す
+                    this.buzzer.src = this.buzzerOriginalSrc;
                 });
             }
         } catch (error) {
             console.warn('Voice play failed:', audioKey, error);
-        }
-    }
-    
-    setupVoiceGain(audio, audioKey) {
-        try {
-            if (this.audioContext && !this.voiceGainSetup) {
-                this.voiceGainSetup = {};
-            }
-            
-            if (this.audioContext && !this.voiceGainSetup[audioKey]) {
-                const source = this.audioContext.createMediaElementSource(audio);
-                const gainNode = this.audioContext.createGain();
-                
-                // ゲインを2.0に設定（ブザーと同じ）
-                gainNode.gain.value = 2.0;
-                
-                source.connect(gainNode);
-                gainNode.connect(this.audioContext.destination);
-                
-                this.voiceGainSetup[audioKey] = true;
-                console.log('Voice gain amplification setup completed for:', audioKey);
-            }
-        } catch (error) {
-            console.warn('Voice gain setup failed for:', audioKey, error);
+            // エラー時もsrcを元に戻す
+            this.buzzer.src = this.buzzerOriginalSrc;
         }
     }
     
     
-    processVoiceQueue() {
-        // 不要 - 直接再生方式に変更
-    }
     
     stopAllAnnouncements() {
-        Object.values(this.voiceElements).forEach(audio => {
-            if (audio) {
-                audio.pause();
-                audio.currentTime = 0;
-            }
-        });
+        // ブザーを停止してsrcを元に戻す
+        this.buzzer.pause();
+        this.buzzer.currentTime = 0;
+        this.buzzer.src = this.buzzerOriginalSrc;
     }
     
     async endTimer() {
@@ -889,7 +867,7 @@ class BasketTimer {
         this.stopAllAnnouncements();
         
         // ブザー音を再生（非同期、エラーが発生しても続行）
-        this.playBuzzer();
+        this.playBuzzerSound();
         
         if (this.isIntervalMode) {
             // インターバルモードの場合は次のフェーズに進む
@@ -943,8 +921,10 @@ class BasketTimer {
         }, 2000);
     }
     
-    playBuzzer() {
+    playBuzzerSound() {
         try {
+            // srcをブザー音に確実にセット
+            this.buzzer.src = this.buzzerOriginalSrc;
             this.buzzer.volume = 1.0; // 再生前に音量を最大に確認
             this.buzzer.currentTime = 0;
             
