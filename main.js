@@ -487,6 +487,10 @@ class BasketTimer {
                             // 音量を0にして完全に無音で初期化
                             voiceElement.volume = 0;
                             voiceElement.currentTime = 0;
+                            
+                            // 音量設定が確実に反映されるまで短時間待機
+                            await new Promise(resolve => setTimeout(resolve, 10));
+                            
                             const playPromise = voiceElement.play();
                             if (playPromise) {
                                 await playPromise;
