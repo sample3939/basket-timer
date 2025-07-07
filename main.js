@@ -484,18 +484,39 @@ class BasketTimer {
                 Object.values(this.voiceElements).forEach(async (voiceElement) => {
                     if (voiceElement) {
                         try {
-                            // 完全に無音で初期化
-                            voiceElement.volume = 0;
+                            // 完全に無音で初期化（二重の無音化）
                             voiceElement.muted = true;
+                            voiceElement.volume = 0;
                             voiceElement.currentTime = 0;
-                            const playPromise = voiceElement.play();
-                            if (playPromise) {
-                                await playPromise;
-                            }
-                            voiceElement.pause();
-                            voiceElement.currentTime = 0;
-                            voiceElement.muted = false;
-                            voiceElement.volume = 1.0;
+                            
+                            // 確実にmuted状態で再生
+                            await new Promise(resolve => {
+                                voiceElement.onloadeddata = () => {
+                                    voiceElement.muted = true; // 再度確認
+                                    const playPromise = voiceElement.play();
+                                    if (playPromise) {
+                                        playPromise.then(() => {
+                                            voiceElement.pause();
+                                            voiceElement.currentTime = 0;
+                                            // 初期化完了後にmutedを解除して音量を設定
+                                            voiceElement.muted = false;
+                                            voiceElement.volume = 1.0;
+                                            resolve();
+                                        }).catch(error => {
+                                            console.warn('Silent play failed:', error);
+                                            resolve();
+                                        });
+                                    } else {
+                                        resolve();
+                                    }
+                                };
+                                
+                                // タイムアウト処理
+                                setTimeout(() => {
+                                    resolve();
+                                }, 100);
+                            });
+                            
                             console.log('Voice element silently initialized for mobile:', voiceElement.id);
                         } catch (error) {
                             console.warn('Voice element initialization failed:', voiceElement.id, error);
