@@ -479,8 +479,33 @@ class BasketTimer {
             const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent);
             const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
             
-            // 音声準備を削除（不要な音声再生を防ぐため）
-            console.log('Audio elements prepared without pre-playback');
+            if (isMobileDevice || isTouchDevice) {
+                // モバイル・タブレットでのみ音声を事前準備（完全無音で初期化のみ）
+                Object.values(this.voiceElements).forEach(async (voiceElement) => {
+                    if (voiceElement) {
+                        try {
+                            // 完全に無音で初期化
+                            voiceElement.volume = 0;
+                            voiceElement.muted = true;
+                            voiceElement.currentTime = 0;
+                            const playPromise = voiceElement.play();
+                            if (playPromise) {
+                                await playPromise;
+                            }
+                            voiceElement.pause();
+                            voiceElement.currentTime = 0;
+                            voiceElement.muted = false;
+                            voiceElement.volume = 1.0;
+                            console.log('Voice element silently initialized for mobile:', voiceElement.id);
+                        } catch (error) {
+                            console.warn('Voice element initialization failed:', voiceElement.id, error);
+                        }
+                    }
+                });
+            } else {
+                // デスクトップでは音声準備をスキップ
+                console.log('Desktop detected - skipping voice element preparation');
+            }
             console.log('Voice elements prepared and activated for mobile');
         } catch (error) {
             console.warn('Audio test failed:', error);
