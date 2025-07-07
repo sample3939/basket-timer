@@ -479,30 +479,8 @@ class BasketTimer {
             const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent);
             const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
             
-            if (isMobileDevice || isTouchDevice) {
-                // モバイル・タブレットでのみ音声を事前準備
-                Object.values(this.voiceElements).forEach(async (voiceElement) => {
-                    if (voiceElement) {
-                        try {
-                            voiceElement.volume = 0; // 音量を0にして完全に無音
-                            voiceElement.currentTime = 0;
-                            const playPromise = voiceElement.play();
-                            if (playPromise) {
-                                await playPromise;
-                            }
-                            voiceElement.pause();
-                            voiceElement.currentTime = 0;
-                            voiceElement.volume = 1.0; // 音量設定
-                            console.log('Voice element activated silently for mobile:', voiceElement.id);
-                        } catch (error) {
-                            console.warn('Voice element activation failed:', voiceElement.id, error);
-                        }
-                    }
-                });
-            } else {
-                // デスクトップでは音声準備をスキップ
-                console.log('Desktop detected - skipping voice element preparation');
-            }
+            // 音声準備を削除（不要な音声再生を防ぐため）
+            console.log('Audio elements prepared without pre-playback');
             console.log('Voice elements prepared and activated for mobile');
         } catch (error) {
             console.warn('Audio test failed:', error);
@@ -899,29 +877,14 @@ class BasketTimer {
             voiceElement.volume = 1.0;
             voiceElement.currentTime = 0;
             
-            if (isMobile) {
-                // モバイル: load()を明示的に呼んでから再生
-                voiceElement.load();
-                setTimeout(() => {
-                    const playPromise = voiceElement.play();
-                    if (playPromise !== undefined) {
-                        playPromise.then(() => {
-                            console.log('Voice played successfully (mobile):', audioKey);
-                        }).catch(error => {
-                            console.warn('Voice play failed (mobile):', audioKey, error);
-                        });
-                    }
-                }, 50); // 50ms遅延
-            } else {
-                // デスクトップ: 即座に再生
-                const playPromise = voiceElement.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        console.log('Voice played successfully (desktop):', audioKey);
-                    }).catch(error => {
-                        console.warn('Voice play failed (desktop):', audioKey, error);
-                    });
-                }
+            // 統一された音声再生処理
+            const playPromise = voiceElement.play();
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    console.log('Voice played successfully:', audioKey);
+                }).catch(error => {
+                    console.warn('Voice play failed:', audioKey, error);
+                });
             }
         } catch (error) {
             console.warn('Voice play failed:', audioKey, error);
