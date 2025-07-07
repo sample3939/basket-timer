@@ -476,21 +476,33 @@ class BasketTimer {
             console.log('Audio test successful - buzzer loaded without playing');
             
             // 専用音声要素をモバイル用に有効化（完全無音）
-            Object.values(this.voiceElements).forEach(async (voiceElement) => {
-                if (voiceElement) {
-                    try {
-                        voiceElement.volume = 0; // 音量を0にして完全に無音
-                        voiceElement.currentTime = 0;
-                        await voiceElement.play();
-                        voiceElement.pause();
-                        voiceElement.currentTime = 0;
-                        voiceElement.volume = 1.0; // 音量設定
-                        console.log('Voice element activated silently for mobile:', voiceElement.id);
-                    } catch (error) {
-                        console.warn('Voice element activation failed:', voiceElement.id, error);
+            const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent);
+            const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+            
+            if (isMobileDevice || isTouchDevice) {
+                // モバイル・タブレットでのみ音声を事前準備
+                Object.values(this.voiceElements).forEach(async (voiceElement) => {
+                    if (voiceElement) {
+                        try {
+                            voiceElement.volume = 0; // 音量を0にして完全に無音
+                            voiceElement.currentTime = 0;
+                            const playPromise = voiceElement.play();
+                            if (playPromise) {
+                                await playPromise;
+                            }
+                            voiceElement.pause();
+                            voiceElement.currentTime = 0;
+                            voiceElement.volume = 1.0; // 音量設定
+                            console.log('Voice element activated silently for mobile:', voiceElement.id);
+                        } catch (error) {
+                            console.warn('Voice element activation failed:', voiceElement.id, error);
+                        }
                     }
-                }
-            });
+                });
+            } else {
+                // デスクトップでは音声準備をスキップ
+                console.log('Desktop detected - skipping voice element preparation');
+            }
             console.log('Voice elements prepared and activated for mobile');
         } catch (error) {
             console.warn('Audio test failed:', error);
@@ -846,7 +858,7 @@ class BasketTimer {
             this.lastAnnouncedMinute = minutes;
         }
         
-        if (this.currentSeconds === 30 && !this.hasAnnounced30Seconds) {
+        if (this.currentSeconds === 30 && !this.hasAnnounced30Seconds && this.currentSeconds < this.totalSeconds) {
             this.announce('30sec');
             this.hasAnnounced30Seconds = true;
         }
