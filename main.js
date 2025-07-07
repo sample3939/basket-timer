@@ -479,12 +479,11 @@ class BasketTimer {
             Object.values(this.voiceElements).forEach(async (voiceElement) => {
                 if (voiceElement) {
                     try {
-                        voiceElement.muted = true; // 完全にミュート
+                        voiceElement.volume = 0; // 音量を0にして完全に無音
                         voiceElement.currentTime = 0;
                         await voiceElement.play();
                         voiceElement.pause();
                         voiceElement.currentTime = 0;
-                        voiceElement.muted = false; // ミュート解除
                         voiceElement.volume = 1.0; // 音量設定
                         console.log('Voice element activated silently for mobile:', voiceElement.id);
                     } catch (error) {
@@ -967,6 +966,9 @@ class BasketTimer {
         // 2秒後に次のタイマーを開始
         setTimeout(() => {
             this.currentSeconds = 0; // リセットして新しい時間を設定
+            this.hasAnnounced30Seconds = false; // 30秒フラグをリセット
+            this.lastAnnouncedMinute = -1; // 分単位フラグをリセット
+            this.countdownStarted = false; // カウントダウンフラグをリセット
             this.startTimer();
         }, 2000);
     }
