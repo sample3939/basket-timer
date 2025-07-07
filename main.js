@@ -488,8 +488,8 @@ class BasketTimer {
                             voiceElement.volume = 0;
                             voiceElement.currentTime = 0;
                             
-                            // 音量設定が確実に反映されるまで短時間待機
-                            await new Promise(resolve => setTimeout(resolve, 10));
+                            // 音量設定が確実に反映されるまで待機（モバイル対応）
+                            await new Promise(resolve => setTimeout(resolve, 50));
                             
                             const playPromise = voiceElement.play();
                             if (playPromise) {
