@@ -17,6 +17,7 @@ class BasketTimer {
         this.fallbackVideo = null;
         this.noSleepEnabled = false;
         this.activitySimulationInterval = null;
+        this.audioInitialized = false;
         
         this.isIntervalMode = false;
         this.intervalPhase = 0; // 0: 7分, 1: 3分
@@ -364,10 +365,14 @@ class BasketTimer {
                 this.initAudioContext();
                 console.log('Desktop audio initialization');
             } else {
-                // モバイル・タブレットの場合は従来の処理
+                // モバイル・タブレットの場合は初回のみ音声初期化
                 this.initAudioContext();
-                this.testAudio();
-                console.log('Mobile/Tablet audio initialization');
+                if (!this.audioInitialized) {
+                    this.testAudio();
+                    console.log('Mobile/Tablet audio initialization (first time)');
+                } else {
+                    console.log('Mobile/Tablet audio already initialized');
+                }
             }
             
             this.startTimer();
@@ -505,6 +510,7 @@ class BasketTimer {
                     }
                     
                     console.log('All voice elements initialized successfully');
+                    this.audioInitialized = true; // 初期化完了フラグを設定
                 } catch (error) {
                     console.warn('Voice audio context activation failed:', error);
                 }
