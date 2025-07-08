@@ -480,21 +480,31 @@ class BasketTimer {
             const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
             
             if (isMobileDevice || isTouchDevice) {
-                // モバイル・タブレットでは1秒の音声を極小音量で再生して音声コンテキストを有効化
+                // モバイル・タブレットでは全ての音声要素を無音で事前再生
                 try {
-                    const testVoice = this.voiceElements['1'];
-                    if (testVoice) {
-                        testVoice.volume = 0.001;
-                        testVoice.currentTime = 0;
-                        const playPromise = testVoice.play();
-                        if (playPromise) {
-                            await playPromise;
+                    console.log('Initializing all voice elements silently...');
+                    
+                    // 全ての音声要素を無音で事前再生
+                    for (const [key, voiceElement] of Object.entries(this.voiceElements)) {
+                        if (voiceElement) {
+                            try {
+                                voiceElement.volume = 0; // 完全に無音
+                                voiceElement.currentTime = 0;
+                                const playPromise = voiceElement.play();
+                                if (playPromise) {
+                                    await playPromise;
+                                }
+                                voiceElement.pause();
+                                voiceElement.currentTime = 0;
+                                voiceElement.volume = 1.0; // 元の音量に戻す
+                                console.log(`Voice element ${key} initialized silently`);
+                            } catch (error) {
+                                console.warn(`Voice element ${key} initialization failed:`, error);
+                            }
                         }
-                        testVoice.pause();
-                        testVoice.currentTime = 0;
-                        testVoice.volume = 1.0; // 元の音量に戻す
-                        console.log('Audio context activated using real voice element');
                     }
+                    
+                    console.log('All voice elements initialized successfully');
                 } catch (error) {
                     console.warn('Voice audio context activation failed:', error);
                 }
