@@ -480,33 +480,23 @@ class BasketTimer {
             const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
             
             if (isMobileDevice || isTouchDevice) {
-                // モバイル・タブレットでのみ音声を事前準備（完全無音で初期化のみ）
-                Object.values(this.voiceElements).forEach(async (voiceElement) => {
-                    if (voiceElement) {
-                        try {
-                            // 音量を0にして完全に無音で初期化
-                            voiceElement.volume = 0;
-                            voiceElement.currentTime = 0;
-                            
-                            // 音量設定が確実に反映されるまで待機（モバイル対応）
-                            await new Promise(resolve => setTimeout(resolve, 2000));
-                            
-                            const playPromise = voiceElement.play();
-                            if (playPromise) {
-                                await playPromise;
-                            }
-                            voiceElement.pause();
-                            voiceElement.currentTime = 0;
-                            voiceElement.volume = 1.0; // 音量を元に戻す
-                            console.log('Voice element silently initialized for mobile:', voiceElement.id);
-                        } catch (error) {
-                            console.warn('Voice element initialization failed:', voiceElement.id, error);
-                        }
+                // モバイル・タブレットでのみsilentAudioで音声コンテキストを有効化
+                try {
+                    this.silentAudio.volume = 0;
+                    this.silentAudio.currentTime = 0;
+                    const playPromise = this.silentAudio.play();
+                    if (playPromise) {
+                        await playPromise;
                     }
-                });
+                    this.silentAudio.pause();
+                    this.silentAudio.currentTime = 0;
+                    console.log('Audio context activated silently for mobile using silent audio');
+                } catch (error) {
+                    console.warn('Silent audio context activation failed:', error);
+                }
             } else {
                 // デスクトップでは音声準備をスキップ
-                console.log('Desktop detected - skipping voice element preparation');
+                console.log('Desktop detected - skipping audio context preparation');
             }
             console.log('Voice elements prepared and activated for mobile');
         } catch (error) {
