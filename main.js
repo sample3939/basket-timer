@@ -475,30 +475,34 @@ class BasketTimer {
             this.buzzer.load();
             console.log('Audio test successful - buzzer loaded without playing');
             
-            // 専用音声要素をモバイル用に有効化（完全無音）
+            // 実際の音声要素で音声コンテキストを有効化
             const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini|Mobile|Tablet/i.test(navigator.userAgent);
             const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
             
             if (isMobileDevice || isTouchDevice) {
-                // モバイル・タブレットでのみsilentAudioで音声コンテキストを有効化
+                // モバイル・タブレットでは1秒の音声を極小音量で再生して音声コンテキストを有効化
                 try {
-                    this.silentAudio.volume = 0;
-                    this.silentAudio.currentTime = 0;
-                    const playPromise = this.silentAudio.play();
-                    if (playPromise) {
-                        await playPromise;
+                    const testVoice = this.voiceElements['1'];
+                    if (testVoice) {
+                        testVoice.volume = 0.001;
+                        testVoice.currentTime = 0;
+                        const playPromise = testVoice.play();
+                        if (playPromise) {
+                            await playPromise;
+                        }
+                        testVoice.pause();
+                        testVoice.currentTime = 0;
+                        testVoice.volume = 1.0; // 元の音量に戻す
+                        console.log('Audio context activated using real voice element');
                     }
-                    this.silentAudio.pause();
-                    this.silentAudio.currentTime = 0;
-                    console.log('Audio context activated silently for mobile using silent audio');
                 } catch (error) {
-                    console.warn('Silent audio context activation failed:', error);
+                    console.warn('Voice audio context activation failed:', error);
                 }
             } else {
                 // デスクトップでは音声準備をスキップ
                 console.log('Desktop detected - skipping audio context preparation');
             }
-            console.log('Voice elements prepared and activated for mobile');
+            console.log('Voice elements prepared and activated');
         } catch (error) {
             console.warn('Audio test failed:', error);
         }
