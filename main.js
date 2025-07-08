@@ -489,19 +489,22 @@ class BasketTimer {
                 try {
                     console.log('Initializing all voice elements silently...');
                     
-                    // 全ての音声要素を無音で事前再生
+                    // 全ての音声要素を完全に無音で事前再生
                     for (const [key, voiceElement] of Object.entries(this.voiceElements)) {
                         if (voiceElement) {
                             try {
-                                voiceElement.volume = 0; // 完全に無音
+                                voiceElement.muted = true; // 完全にミュート
                                 voiceElement.currentTime = 0;
                                 const playPromise = voiceElement.play();
                                 if (playPromise) {
                                     await playPromise;
                                 }
-                                voiceElement.pause();
-                                voiceElement.currentTime = 0;
-                                voiceElement.volume = 1.0; // 元の音量に戻す
+                                // 即座に停止
+                                setTimeout(() => {
+                                    voiceElement.pause();
+                                    voiceElement.currentTime = 0;
+                                    voiceElement.muted = false; // ミュートを解除
+                                }, 10); // 10ms後に停止
                                 console.log(`Voice element ${key} initialized silently`);
                             } catch (error) {
                                 console.warn(`Voice element ${key} initialization failed:`, error);
